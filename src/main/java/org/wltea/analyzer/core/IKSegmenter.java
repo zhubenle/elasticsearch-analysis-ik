@@ -24,6 +24,7 @@
 package org.wltea.analyzer.core;
 
 import org.wltea.analyzer.cfg.Configuration;
+import org.wltea.analyzer.dic.Dictionary;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -45,15 +46,17 @@ public final class IKSegmenter {
 	//分词歧义裁决器
 	private IKArbitrator arbitrator;
     private  Configuration configuration;
-	
+    private Dictionary dictionary;
+
 
 	/**
 	 * IK分词器构造函数
 	 * @param input
      */
-	public IKSegmenter(Reader input ,Configuration configuration){
+	public IKSegmenter(Reader input ,Configuration configuration, Dictionary dictionary){
 		this.input = input;
         this.configuration = configuration;
+        this.dictionary = dictionary;
         this.init();
 	}
 
@@ -63,7 +66,7 @@ public final class IKSegmenter {
 	 */
 	private void init(){
 		//初始化分词上下文
-		this.context = new AnalyzeContext(configuration);
+		this.context = new AnalyzeContext(configuration, dictionary);
 		//加载子分词器
 		this.segmenters = this.loadSegmenters();
 		//加载歧义裁决器
@@ -79,9 +82,9 @@ public final class IKSegmenter {
 		//处理字母的子分词器
 		segmenters.add(new LetterSegmenter()); 
 		//处理中文数量词的子分词器
-		segmenters.add(new CN_QuantifierSegmenter());
+		segmenters.add(new CN_QuantifierSegmenter(dictionary));
 		//处理中文词的子分词器
-		segmenters.add(new CJKSegmenter());
+		segmenters.add(new CJKSegmenter(dictionary));
 		return segmenters;
 	}
 	

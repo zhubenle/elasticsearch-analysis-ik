@@ -24,6 +24,9 @@
  */
 package org.wltea.analyzer.core;
 
+import org.wltea.analyzer.cfg.Configuration;
+import org.wltea.analyzer.dic.Dictionary;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
@@ -31,9 +34,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-
-import org.wltea.analyzer.cfg.Configuration;
-import org.wltea.analyzer.dic.Dictionary;
 
 /**
  * 
@@ -76,7 +76,10 @@ class AnalyzeContext {
 	//分词器配置项
 	private Configuration cfg;
 
-    public AnalyzeContext(Configuration configuration){
+	private Dictionary dictionary;
+
+    public AnalyzeContext(Configuration configuration, Dictionary dictionary){
+        this.dictionary = dictionary;
         this.cfg = configuration;
     	this.segmentBuff = new char[BUFF_SIZE];
     	this.charTypes = new int[BUFF_SIZE];
@@ -322,7 +325,7 @@ class AnalyzeContext {
 		while(result != null){
     		//数量词合并
     		this.compound(result);
-    		if(Dictionary.getSingleton().isStopWord(this.segmentBuff ,  result.getBegin() , result.getLength())){
+    		if(dictionary.isStopWord(this.segmentBuff ,  result.getBegin() , result.getLength())){
        			//是停止词继续取列表的下一个
     			result = this.results.pollFirst(); 				
     		}else{

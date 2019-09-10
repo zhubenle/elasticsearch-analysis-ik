@@ -27,6 +27,7 @@ package org.wltea.analyzer.lucene;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.Tokenizer;
 import org.wltea.analyzer.cfg.Configuration;
+import org.wltea.analyzer.dic.Dictionary;
 
 /**
  * IK分词器，Lucene Analyzer接口实现
@@ -35,6 +36,7 @@ import org.wltea.analyzer.cfg.Configuration;
 public final class IKAnalyzer extends Analyzer{
 	
 	private Configuration configuration;
+	private Dictionary dictionary;
 
 	/**
 	 * IK分词器Lucene  Analyzer接口实现类
@@ -49,9 +51,10 @@ public final class IKAnalyzer extends Analyzer{
 	 * 
 	 * @param configuration IK配置
 	 */
-	public IKAnalyzer(Configuration configuration){
+	public IKAnalyzer(Configuration configuration, Dictionary dictionary){
 		super();
         this.configuration = configuration;
+        this.dictionary = dictionary;
 	}
 
 
@@ -60,7 +63,7 @@ public final class IKAnalyzer extends Analyzer{
 	 */
 	@Override
 	protected TokenStreamComponents createComponents(String fieldName) {
-        Tokenizer _IKTokenizer = new IKTokenizer(configuration);
+        Tokenizer _IKTokenizer = new IKTokenizer(configuration, dictionary);
 		return new TokenStreamComponents(_IKTokenizer);
     }
 
