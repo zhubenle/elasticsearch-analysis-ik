@@ -28,6 +28,10 @@ public class DictReloadResponse extends ActionResponse implements ToXContentObje
         this.map = map;
     }
 
+    public DictReloadResponse(StreamInput in) throws IOException {
+        readFrom(in);
+    }
+
     public Map<String, Object> getMap() {
         return map;
     }

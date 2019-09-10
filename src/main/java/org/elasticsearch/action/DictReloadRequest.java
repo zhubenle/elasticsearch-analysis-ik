@@ -25,6 +25,13 @@ public class DictReloadRequest extends SingleShardRequest<DictReloadRequest> {
     private Map<String, Object> args = new HashMap<>();
     private BytesReference source;
 
+    public DictReloadRequest() {
+    }
+
+    public DictReloadRequest(StreamInput in) throws IOException {
+        readFrom(in);
+    }
+
     @Override
     public void readFrom(StreamInput in) throws IOException {
         super.readFrom(in);

@@ -10,19 +10,10 @@ import org.elasticsearch.common.io.stream.Writeable;
  */
 public class DictReloadAction extends ActionType<DictReloadResponse> {
 
-    public static final DictReloadAction INSTANCE = new DictReloadAction();
     static final String NAME = "cluster:admin/ik/dict/reload";
+    public static final DictReloadAction INSTANCE = new DictReloadAction(NAME, DictReloadResponse::new);
 
-    private DictReloadAction() {
-        super(NAME);
-    }
-
-    @Override
-    public Writeable.Reader<DictReloadResponse> getResponseReader() {
-        return in -> {
-            DictReloadResponse response = new DictReloadResponse();
-            response.readFrom(in);
-            return response;
-        };
+    public DictReloadAction(String name, Writeable.Reader<DictReloadResponse> dictReloadResponseReader) {
+        super(name, dictReloadResponseReader);
     }
 }

@@ -1,25 +1,20 @@
 package org.elasticsearch.action;
 
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.admin.indices.settings.get.GetSettingsRequest;
-import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
-import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.Table;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.rest.action.RestActionListener;
+import org.elasticsearch.rest.action.RestResponseListener;
 import org.elasticsearch.rest.action.cat.AbstractCatAction;
 import org.wltea.analyzer.help.ESPluginLoggerFactory;
 
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.Set;
 
 import static org.elasticsearch.rest.RestRequest.Method.GET;
 
@@ -44,40 +39,22 @@ public class DictReloadCatAction extends AbstractCatAction {
 
     @Override
     protected RestChannelConsumer doCatRequest(RestRequest request, NodeClient client) {
-        final String[] indices = Strings.splitStringByCommaToArray(request.param("index"));
-        final IndicesOptions indicesOptions = IndicesOptions.strictExpand();
-        GetSettingsRequest settingsRequest = new GetSettingsRequest();
-        settingsRequest.indices(indices);
-        settingsRequest.indicesOptions(indicesOptions);
-        settingsRequest.local(false);
-        settingsRequest.names(IndexSettings.INDEX_SEARCH_THROTTLED.getKey());
+        DictReloadRequest dictReloadRequest = new DictReloadRequest();
+        dictReloadRequest.setPath(request.path());
+        dictReloadRequest.getArgs().putAll(request.params());
 
         return restChannel -> {
+            client.execute(DictReloadAction.INSTANCE, dictReloadRequest, new RestResponseListener<DictReloadResponse>(restChannel) {
 
-            client.admin().indices().getSettings(settingsRequest, new RestActionListener<GetSettingsResponse>(restChannel) {
                 @Override
-                protected void processResponse(GetSettingsResponse getSettingsResponse) throws Exception {
-                    String indicesStr = StreamSupport.stream(getSettingsResponse.getIndexToSettings().spliterator(), false)
-                            .map(cursor -> cursor.key)
-                            .collect(Collectors.joining(","));
-
-                    DictReloadRequest dictReloadRequest = new DictReloadRequest();
-                    dictReloadRequest.setPath(request.path());
-                    dictReloadRequest.getArgs().put("index", indicesStr);
-                    client.execute(DictReloadAction.INSTANCE, dictReloadRequest, new RestActionListener<DictReloadResponse>(restChannel) {
-                        @Override
-                        protected void processResponse(DictReloadResponse dictReloadResponse) throws Exception {
-                            logger.info("DictReloadResponse={}", dictReloadResponse);
-                            try (XContentBuilder builder = channel.newBuilder()) {
-                                builder.map(dictReloadResponse.getMap());
-                                restChannel.sendResponse(new BytesRestResponse(RestStatus.OK, builder));
-                            }
-                        }
-                    });
+                public RestResponse buildResponse(DictReloadResponse dictReloadResponse) throws Exception {
+                    logger.info("DictReloadResponse={}", dictReloadResponse);
+                    try (XContentBuilder builder = channel.newBuilder()) {
+                        builder.map(dictReloadResponse.getMap());
+                        return new BytesRestResponse(RestStatus.OK, builder);
+                    }
                 }
             });
-
-
         };
     }
 
@@ -89,6 +66,11 @@ public class DictReloadCatAction extends AbstractCatAction {
     @Override
     protected Table getTableWithHeader(RestRequest request) {
         return null;
+    }
+
+    @Override
+    protected Set<String> responseParams() {
+        return super.responseParams();
     }
 
     @Override

@@ -45,7 +45,7 @@ public class TransportDictReloadAction extends TransportSingleShardAction<DictRe
                                      IndexNameExpressionResolver indexNameExpressionResolver) {
         super(DictReloadAction.NAME, threadPool, clusterService, transportService, actionFilters,
                 indexNameExpressionResolver,
-                in -> new DictReloadRequest(),
+                DictReloadRequest::new,
                 ThreadPool.Names.SAME);
         this.nodeName = clusterService.getNodeName();
     }
@@ -59,7 +59,6 @@ public class TransportDictReloadAction extends TransportSingleShardAction<DictRe
                 logger.info("nodeName={}, 重新加载index={}字典", nodeName, request.getArgs().get("index"));
                 DictReloadResponse response = new DictReloadResponse();
                 response.getMap().put(nodeName, "success");
-                System.gc();
                 return response;
             default:
                 DictReloadResponse response2 = new DictReloadResponse();
@@ -71,11 +70,7 @@ public class TransportDictReloadAction extends TransportSingleShardAction<DictRe
 
     @Override
     protected Writeable.Reader<DictReloadResponse> getResponseReader() {
-        return in -> {
-            DictReloadResponse response = new DictReloadResponse();
-            response.readFrom(in);
-            return response;
-        };
+        return DictReloadResponse::new;
     }
 
     @Override
@@ -96,17 +91,17 @@ public class TransportDictReloadAction extends TransportSingleShardAction<DictRe
         ClusterState clusterState = clusterService.state();
         clusterState.blocks().globalBlockedRaiseException(ClusterBlockLevel.READ);
         DiscoveryNodes nodes = clusterState.nodes();
-
+        Writeable.Reader<DictReloadResponse> reader = getResponseReader();
         final CountDownLatch countDownLatch = new CountDownLatch(nodes.getSize());
         final Map<String, String> result = new HashMap<>();
         for (final DiscoveryNode node : nodes) {
+
             result.put(node.getAddress().toString(), "time out");
+
             TransportResponseHandler<DictReloadResponse> responseHandler = new TransportResponseHandler<DictReloadResponse>() {
                 @Override
                 public DictReloadResponse read(StreamInput in) throws IOException {
-                    DictReloadResponse instance = new DictReloadResponse();
-                    instance.readFrom(in);
-                    return instance;
+                    return reader.read(in);
                 }
 
                 @Override
